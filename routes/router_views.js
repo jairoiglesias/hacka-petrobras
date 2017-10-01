@@ -17,8 +17,28 @@ function distLatLong(lat1,lon1,lat2,lon2) {
 
 module.exports = function(app) {
 
+  app.get('/painel_brmania', (req, res) => {
+    res.render('painel_brmania')
+  })
+
   app.get('/teste', (req, res) => {
     res.render('teste')
+  })
+
+  // Devolve o ultimo pedido gerado
+  app.get('/get_last_pedido', (req, res) => {
+
+    var db = require('./../libs/connectdb.js')()
+
+    var Pedidos = db.model('Pedidos')
+
+    Pedidos.find({}).sort({_id:-1}).limit(1).exec((err, docs) => {
+      if(err) throw err
+
+      res.send(docs)
+
+    })
+
   })
 
   app.get('/pedidos/consulta', (req, res) => {
@@ -39,13 +59,32 @@ module.exports = function(app) {
 
   })
 
+  app.get('/locais_brmania/consulta/:limit', (req, res) => {
+
+    var limit = Number(req.params.limit)
+
+    var db = require('./../libs/connectdb.js')()
+    
+    var Locais = db.model('Locais')
+
+    Locais.find({}).limit(limit).exec(function(err, docs){
+      if(err){
+          throw err
+      }
+
+      res.send(docs);
+      
+    })
+
+  })
+
   app.get('/locais_brmania/consulta', (req, res) => {
 
     var db = require('./../libs/connectdb.js')()
     
     var Locais = db.model('Locais')
 
-    Locais.find({}, function(err, docs){
+    Locais.find({}).limit().exec(function(err, docs){
       if(err){
           throw err
       }
