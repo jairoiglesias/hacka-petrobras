@@ -112,50 +112,185 @@ module.exports = function(app) {
 
   })
 
+  app.get('/get_estoque/:nome_produto', (req, res) => {
+
+    var nomeProduto = req.params.nome_produto;
+
+    var db = require('./../libs/connectdb.js')()
+
+    var Estoques = db.model('Estoques')
+
+    Estoques.find({nome_produto : nomeProduto}, (err, docs) => {
+      console.log(docs)
+      res.send(docs)
+    })
+
+  })
+
+  // Função para verificar a disponibilidade dos items no estoque
+
+  function verificaEstoque(items){
+
+    return new Promise(function(resolve, reject){
+
+      var db = require('./../libs/connectdb.js')()
+
+      var Estoques = db.model('Estoques')
+
+      var newItems = []
+      var semEstoque = false
+
+      items.forEach(function(value, index){
+
+        var nomeProduto = value.nome_produto
+        var qtdeRequisitada = value.qtde
+
+        Estoques.find({nome_produto : nomeProduto}, (err, docs) => {
+          
+          var registro = docs[0];
+
+          if(registro == undefined){
+            console.log('Produto inexistente no estoque')
+            value.semEstoque = true
+            semEstoque = true
+
+          }
+          else{
+            var qtdeEstoque = registro.qtde
+
+            if((qtdeRequisitada + 5) >= qtdeEstoque){
+              console.log('Estoque vazio')
+              value.semEstoque = true
+              semEstoque = true
+            }
+            else{
+              console.log('Quantidade autorizada para reserva no estoque')
+              value.semEstoque = false
+            }
+          }
+          
+          newItems.push(value)
+
+          if(index == (items.length - 1)){
+            resolve({items: newItems, semEstoque: semEstoque})
+          }
+
+        })
+
+      })
+
+    })
+
+  }
+
+  function atualizaEstoque(items){
+
+    return new Promise(function(resolve, reject){
+
+      var db = require('./../libs/connectdb.js')()
+
+      var Estoques = db.model('Estoques')
+
+      var newItems = []
+      var semEstoque = false
+
+      items.forEach(function(value, index){
+
+        var nomeProduto = value.nome_produto
+        var qtdeRequisitada = value.qtde
+
+        Estoques.find({nome_produto : nomeProduto}, (err, docs) => {
+          
+          var registro = docs[0];
+          var qtdeEstoque = registro.qtde
+
+          Estoques.findOneAndUpdate({nome_produto : nomeProduto}, {qtde: (qtdeEstoque - qtdeRequisitada)}, {upsert:true}, function(err, doc){
+            
+            if (err) throw err
+            resolve('1')
+
+          })
+
+        })
+
+      })
+
+    })
+
+  }
+
   // ### Efetua o cadastro de um novo pedido no posto devolvendo a imagem do QRCODE em Base64
 
   app.get('/pedidos/cadastro', (req, res) => {
 
     var data_cadastro = req.query.data_cadastro;
     var nome_cliente = req.query.nome_cliente;
+    var items = req.query.items
 
-    var db = require('./../libs/connectdb.js')()
+    // Converte a String JSON recuperada da URL em um objeto JSON valido
+    items = eval(items)
     
-    var Pedidos = db.model('Pedidos')
+    // Verifica a disponibilidade do estoque
+    verificaEstoque(items).then(function(itemsProc){
 
-    // Cria um novo pedido
-    novoPedido = new Pedidos({
-      data_cadastro: data_cadastro,
-      nome_cliente : nome_cliente
-    })
+      if(itemsProc.semEstoque == true){
+        console.log('sem estoque em um dos items')
+        res.send(itemsProc)
+      }
+      else{
 
-    novoPedido.save(function(err, results){
-      if(err) throw err
+        console.log('estoque tudo ok')
 
-      console.log('cadastrado com sucesso')
+        var db = require('./../libs/connectdb.js')()
+        
+        var Pedidos = db.model('Pedidos')
 
-      // Inicia a geração da imagem QRCODE
+        // Cria um novo pedido
+        novoPedido = new Pedidos({
+          data_cadastro: data_cadastro,
+          nome_cliente : nome_cliente
+        })
 
-      var id = String(results._id)
-      console.log(id)
+        novoPedido.save(function(err, results){
+        
+          if(err) throw err
 
-      var QRCode = require('qrcode')
-      
-      QRCode.toDataURL(id, function (err, url) {
-        console.log('QRCODE processado com sucesso')
+          console.log('cadastrado com sucesso')
+          console.log('1')
 
-        console.log(url)
+          atualizaEstoque(items).then(function(){
+            res.send(itemsProc)
+            console.log('estoque atualizado com sucesso')
+          })
 
-        Pedidos.findOneAndUpdate({_id : results._id}, {'image_qrcode' : url}, function(err, docs){
-          if(err){
-            throw err
-          }
 
-          res.send(id)
+          // Inicia a geração da imagem QRCODE
+
+          // var id = String(results._id)
+          // console.log(id)
+
+          // var QRCode = require('qrcode')
+          
+          // QRCode.toDataURL(id, function (err, url) {
+          //   console.log('QRCODE processado com sucesso')
+
+          //   console.log(url)
+
+          //   Pedidos.findOneAndUpdate({_id : results._id}, {'image_qrcode' : url}, function(err, docs){
+          //     if(err){
+          //       throw err
+          //     }
+
+          //     res.send(id)
+
+          //   })
+
+          // })
+
 
         })
 
-      })
+      }
 
     })
 

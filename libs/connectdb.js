@@ -112,6 +112,16 @@ module.exports = function(){
 			})
 
 			mongoose.model('Postos', PostosSchema)
+
+			// Estoque
+
+			var EstoquesSchema = new mongoose.Schema({
+				'nome_produto' : String,
+				'valor' : Number,
+				'qtde' : Number
+			})
+
+			mongoose.model('Estoques', EstoquesSchema)
 			
 		})
 
