@@ -25,9 +25,9 @@ module.exports = function(app) {
     res.render('frentista')
   })
 
-  app.get('/teste', (req, res) => {
-    res.render('teste')
-  })
+  // app.get('/teste', (req, res) => {
+  //   res.render('teste')
+  // })
 
   // Devolve o ultimo pedido gerado
   app.get('/get_last_pedido', (req, res) => {
