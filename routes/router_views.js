@@ -21,6 +21,10 @@ module.exports = function(app) {
     res.render('painel_brmania')
   })
 
+  app.get('/frentista', (req, res) => {
+    res.render('frentista')
+  })
+
   app.get('/teste', (req, res) => {
     res.render('teste')
   })
