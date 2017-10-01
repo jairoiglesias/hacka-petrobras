@@ -65,11 +65,54 @@ module.exports = function(){
 				'data_cadastro' : String,
 				'nome_cliente' : String,
 				'image_qrcode' : String,
-				items : [{'nome_item' : String, 'qtde' : Number}]
+				items : [{
+					'nome_item' : String,
+					'tipo': String,
+					'target' : String,
+					'qtde' : Number
+				}]
 			})
 
 			mongoose.model('Pedidos', pedidosSchema)
 
+			// Locais BR MANIA
+			var LocaisSchema = new mongoose.Schema({
+				'COD_CLIENTE' : String,
+				'NUM_CNPJ' : String,
+				'NOM_RAZAO_SOCIAL' : String,
+				'NOM_APELIDO' : String,
+				'DSC_TIP_POSTO' : String,
+				'NUM_TEL' : String,
+				'END_CLIENTE' : String,
+				'SGL_UF' : String,
+				'NOM_CIDADE' : String,
+				'NOM_BAIRRO' : String,
+				'NUM_CEP' : String,
+				'LONGITUDE' : String,
+				'LATITUDE' : String
+			})
+
+			mongoose.model('Locais', LocaisSchema)
+			
+			var PostosSchema = new mongoose.Schema({
+				'INCL_COD_CLI' : String,
+				'INCL_NOM_APELIDO_CLI' : String,
+				'INCL_NOM_RAZ_SOC' : String,
+				'INCL_NUM_CNPJ_CPF' : String,
+				'INCL_END_CLI' : String,
+				'INCL_NUM_END_CLI' : String,
+				'INCL_NOM_BAI_END_CLI' : String,
+				'INCL_NOM_MCP' : String,
+				'INCL_SGL_EST' : String,
+				'INCL_SGL_PAI' : String,
+				'INCL_COD_CEP_END_CLI' : String,
+				'INCL_IND_PGM_CRACHA' : String,
+				'LATITUDE' : String,
+				'LONGITUDE': String
+			})
+
+			mongoose.model('Postos', PostosSchema)
+			
 		})
 
 	}
